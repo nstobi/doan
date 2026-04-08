@@ -18,9 +18,9 @@ exports.getAll = async (req, res) => {
       .populate('major', 'name code')
       .populate('enrolledSubjects.subject', 'name code credits')
       .sort({ studentId: 1 })
-    res.json(students)
+    return res.json(students)
   } catch (err) {
-    res.status(500).json({ message: err.message })
+    return res.status(500).json({ message: err.message })
   }
 }
 
@@ -30,9 +30,9 @@ exports.getOne = async (req, res) => {
       .populate('major', 'name code description')
       .populate('enrolledSubjects.subject', 'name code credits description')
     if (!student) return res.status(404).json({ message: 'Không tìm thấy sinh viên' })
-    res.json(student)
+    return res.json(student)
   } catch (err) {
-    res.status(500).json({ message: err.message })
+    return res.status(500).json({ message: err.message })
   }
 }
 
@@ -46,6 +46,7 @@ exports.create = async (req, res) => {
       enrolledSubjects: []
     })
 
+    // Auto-enroll môn học kỳ 1
     if (major) {
       const program = await Program.findOne({ major })
       if (program) {
@@ -66,13 +67,13 @@ exports.create = async (req, res) => {
       .populate('major', 'name code')
       .populate('enrolledSubjects.subject', 'name code credits')
 
-    res.status(201).json(populated)
+    return res.status(201).json(populated)
   } catch (err) {
     if (err.code === 11000) {
-      const field = err.keyValue.email ? 'Email' : 'Mã sinh viên'
+      const field = err.keyValue?.email ? 'Email' : 'Mã sinh viên'
       return res.status(400).json({ message: `${field} đã tồn tại` })
     }
-    res.status(500).json({ message: err.message })
+    return res.status(500).json({ message: err.message })
   }
 }
 
@@ -82,18 +83,18 @@ exports.update = async (req, res) => {
       .populate('major', 'name code')
       .populate('enrolledSubjects.subject', 'name code credits')
     if (!student) return res.status(404).json({ message: 'Không tìm thấy sinh viên' })
-    res.json(student)
+    return res.json(student)
   } catch (err) {
-    res.status(500).json({ message: err.message })
+    return res.status(500).json({ message: err.message })
   }
 }
 
 exports.remove = async (req, res) => {
   try {
     await Student.findByIdAndDelete(req.params.id)
-    res.json({ message: 'Đã xóa sinh viên' })
+    return res.json({ message: 'Đã xóa sinh viên' })
   } catch (err) {
-    res.status(500).json({ message: err.message })
+    return res.status(500).json({ message: err.message })
   }
 }
 
@@ -105,7 +106,9 @@ exports.advanceSemester = async (req, res) => {
     const nextSemester = student.currentSemester + 1
     const program = await Program.findOne({ major: student.major })
     if (!program) return res.status(400).json({ message: 'Ngành chưa có chương trình đào tạo' })
-    if (nextSemester > program.totalSemesters) return res.status(400).json({ message: 'Đã hoàn thành toàn bộ chương trình' })
+    if (nextSemester > program.totalSemesters) {
+      return res.status(400).json({ message: 'Đã hoàn thành toàn bộ chương trình' })
+    }
 
     const nextSemData = program.semesters.find(s => s.semesterNumber === nextSemester)
     if (nextSemData) {
@@ -124,8 +127,8 @@ exports.advanceSemester = async (req, res) => {
       .populate('major', 'name code')
       .populate('enrolledSubjects.subject', 'name code credits')
 
-    res.json(populated)
+    return res.json(populated)
   } catch (err) {
-    res.status(500).json({ message: err.message })
+    return res.status(500).json({ message: err.message })
   }
 }

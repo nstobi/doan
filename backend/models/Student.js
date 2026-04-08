@@ -9,15 +9,15 @@ const EnrolledSubjectSchema = new mongoose.Schema({
 
 const StudentSchema = new mongoose.Schema(
   {
-    studentId:       { type: String, required: true, unique: true },
-    name:            { type: String, required: true },
-    email:           { type: String, required: true, unique: true, lowercase: true },
-    phone:           { type: String, default: '' },
-    dateOfBirth:     { type: Date },
-    major:           { type: mongoose.Schema.Types.ObjectId, ref: 'Major' },
-    currentSemester: { type: Number, default: 1 },
+    studentId:        { type: String, required: true, unique: true },
+    name:             { type: String, required: true },
+    email:            { type: String, required: true, unique: true, lowercase: true },
+    phone:            { type: String, default: '' },
+    dateOfBirth:      { type: Date },
+    major:            { type: mongoose.Schema.Types.ObjectId, ref: 'Major' },
+    currentSemester:  { type: Number, default: 1 },
     enrolledSubjects: [EnrolledSubjectSchema],
-    status:          { type: String, enum: ['active', 'graduated', 'suspended'], default: 'active' }
+    status:           { type: String, enum: ['active', 'graduated', 'suspended'], default: 'active' }
   },
   { timestamps: true }
 )

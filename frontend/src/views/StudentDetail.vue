@@ -32,22 +32,25 @@
       <div class="card">
         <div class="card-header"><h3>📚 Môn học theo kỳ</h3></div>
         <div class="card-body">
-          <div v-for="group in groupedSubjects" :key="group.semester" style="margin-bottom:20px">
-            <div class="semester-label">
-              Kỳ {{ group.semester }}
-              <span v-if="group.semester === student.currentSemester" class="badge badge-success" style="margin-left:8px">Đang học</span>
+          <div v-if="!groupedSubjects.length" class="empty-state"><p>Chưa có môn học nào</p></div>
+          <div v-else style="display:flex;flex-direction:column;gap:20px">
+            <div v-for="group in groupedSubjects" :key="group.semester">
+              <div class="sem-label">
+                Kỳ {{ group.semester }}
+                <span v-if="group.semester === student.currentSemester" class="badge badge-success" style="margin-left:8px">Đang học</span>
+              </div>
+              <table>
+                <thead><tr><th>Mã môn</th><th>Tên môn</th><th>Tín chỉ</th><th>Trạng thái</th></tr></thead>
+                <tbody>
+                  <tr v-for="es in group.subjects" :key="es._id">
+                    <td><span class="badge badge-info">{{ es.subject?.code }}</span></td>
+                    <td>{{ es.subject?.name }}</td>
+                    <td>{{ es.subject?.credits }} TC</td>
+                    <td><span class="badge" :class="subClass(es.status)">{{ subLabel(es.status) }}</span></td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
-            <table>
-              <thead><tr><th>Mã môn</th><th>Tên môn</th><th>Tín chỉ</th><th>Trạng thái</th></tr></thead>
-              <tbody>
-                <tr v-for="es in group.subjects" :key="es._id">
-                  <td><span class="badge badge-info">{{ es.subject?.code }}</span></td>
-                  <td>{{ es.subject?.name }}</td>
-                  <td>{{ es.subject?.credits }} TC</td>
-                  <td><span class="badge" :class="subjectClass(es.status)">{{ subjectLabel(es.status) }}</span></td>
-                </tr>
-              </tbody>
-            </table>
           </div>
         </div>
       </div>
@@ -56,6 +59,7 @@
 </template>
 
 <script setup>
+/* eslint-disable */
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { studentAPI } from '@/api'
@@ -65,8 +69,8 @@ const student  = ref(null)
 const loading  = ref(true)
 const advancing= ref(false)
 
-const subjectClass = (s) => ({ in_progress:'badge-info', passed:'badge-success', failed:'badge-danger' }[s])
-const subjectLabel = (s) => ({ in_progress:'Đang học', passed:'Đã qua', failed:'Không đạt' }[s])
+const subClass = (s) => ({ in_progress:'badge-info', passed:'badge-success', failed:'badge-danger' }[s])
+const subLabel = (s) => ({ in_progress:'Đang học', passed:'Đã qua', failed:'Không đạt' }[s])
 
 const groupedSubjects = computed(() => {
   if (!student.value?.enrolledSubjects) return []
@@ -90,15 +94,14 @@ const advance = async () => {
     const { data } = await studentAPI.advanceSemester(route.params.id)
     student.value = data
     alert(`✅ Đã nâng lên Kỳ ${data.currentSemester}!`)
-  } catch(e) {
-    alert(e.response?.data?.message || 'Có lỗi xảy ra')
-  } finally { advancing.value = false }
+  } catch(e) { alert(e.response?.data?.message || 'Có lỗi xảy ra') }
+  finally { advancing.value = false }
 }
 
 onMounted(load)
 </script>
 
 <style scoped>
-.avatar { width:64px; height:64px; border-radius:50%; background:var(--primary); color:white; display:flex; align-items:center; justify-content:center; font-size:28px; font-weight:700; flex-shrink:0; }
-.semester-label { font-size:14px; font-weight:700; color:var(--primary); padding:8px 0 10px; display:flex; align-items:center; border-bottom:2px solid var(--primary-50); margin-bottom:8px; }
+.avatar    { width:64px; height:64px; border-radius:50%; background:var(--primary); color:white; display:flex; align-items:center; justify-content:center; font-size:28px; font-weight:700; flex-shrink:0; }
+.sem-label { font-size:14px; font-weight:700; color:var(--primary); padding:8px 0 10px; display:flex; align-items:center; border-bottom:2px solid var(--primary-50); margin-bottom:8px; }
 </style>

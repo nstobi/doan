@@ -1,28 +1,10 @@
-// models/Submission.js
-// Bài nộp của sinh viên
-
 const mongoose = require('mongoose')
 
 const SubmissionSchema = new mongoose.Schema(
   {
-    // Thuộc bài thi nào
-    assignment: {
-      type:     mongoose.Schema.Types.ObjectId,
-      ref:      'Assignment',
-      required: true
-    },
-    // Sinh viên nộp
-    student: {
-      type:     mongoose.Schema.Types.ObjectId,
-      ref:      'Student',
-      required: true
-    },
-    // Nội dung bài làm (text)
-    content: {
-      type:    String,
-      default: ''
-    },
-    // File nộp bài
+    assignment:  { type: mongoose.Schema.Types.ObjectId, ref: 'Assignment', required: true },
+    student:     { type: mongoose.Schema.Types.ObjectId, ref: 'Student',    required: true },
+    content:     { type: String, default: '' },
     attachments: [
       {
         originalName: String,
@@ -31,36 +13,15 @@ const SubmissionSchema = new mongoose.Schema(
         fileSize:     Number
       }
     ],
-    // Trạng thái
-    status: {
-      type:    String,
-      enum:    ['submitted', 'graded', 'late'],
-      default: 'submitted'
-    },
-    // Điểm (sau khi giáo viên chấm)
-    score: {
-      type:    Number,
-      default: null
-    },
-    // Nhận xét của giáo viên
-    feedback: {
-      type:    String,
-      default: ''
-    },
-    // Giáo viên chấm
-    gradedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref:  'User'
-    },
-    // Thời điểm chấm
-    gradedAt: {
-      type: Date
-    }
+    status:    { type: String, enum: ['submitted', 'graded', 'late'], default: 'submitted' },
+    score:     { type: Number, default: null },
+    feedback:  { type: String, default: '' },
+    gradedBy:  { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    gradedAt:  { type: Date }
   },
   { timestamps: true }
 )
 
-// Mỗi sinh viên chỉ nộp 1 lần cho mỗi bài thi
 SubmissionSchema.index(
   { assignment: 1, student: 1 },
   { unique: true }

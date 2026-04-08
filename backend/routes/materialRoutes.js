@@ -1,19 +1,11 @@
-// routes/materialRoutes.js
-
 const router = require('express').Router()
 const ctrl   = require('../controllers/materialController')
 const upload = require('../middleware/upload')
+const { auth, role } = require('../middleware/auth')
 
-// Lấy học liệu theo lớp
-router.get('/class/:classId', ctrl.getByClass)
-
-// Upload học liệu (single file, field name: 'file')
-router.post('/class/:classId', upload.single('file'), ctrl.upload)
-
-// Download file
-router.get('/:id/download', ctrl.download)
-
-// Xóa tài liệu
-router.delete('/:id', ctrl.remove)
+router.get('/class/:classId',  auth,                            ctrl.getByClass)
+router.post('/class/:classId', auth, role(['admin', 'teacher']), upload.single('file'), ctrl.upload)
+router.get('/:id/download',    auth,                            ctrl.download)
+router.delete('/:id',          auth, role(['admin', 'teacher']), ctrl.remove)
 
 module.exports = router

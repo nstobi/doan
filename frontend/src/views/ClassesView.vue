@@ -7,14 +7,10 @@
     <div class="card">
       <div class="card-body" style="padding:0">
         <div v-if="loading" class="loading-wrap"><div class="spinner"></div></div>
-        <div v-else-if="!classes.length" class="empty-state">
-          <div class="icon">🏛️</div><p>Chưa có lớp học nào</p>
-        </div>
+        <div v-else-if="!classes.length" class="empty-state"><div class="icon">🏛️</div><p>Chưa có lớp học nào</p></div>
         <div v-else class="table-wrap">
           <table>
-            <thead>
-              <tr><th>Tên lớp</th><th>Môn học</th><th>Ngành</th><th>Kỳ</th><th>Sĩ số</th><th>Số buổi</th><th>Thao tác</th></tr>
-            </thead>
+            <thead><tr><th>Tên lớp</th><th>Môn học</th><th>Ngành</th><th>Kỳ</th><th>Sĩ số</th><th>Số buổi</th><th>Thao tác</th></tr></thead>
             <tbody>
               <tr v-for="c in classes" :key="c._id">
                 <td><strong>{{ c.name }}</strong></td>
@@ -45,10 +41,7 @@
         <div class="modal-body">
           <div v-if="error" class="alert alert-error">{{ error }}</div>
           <div class="alert alert-info">💡 Sinh viên cùng ngành + cùng kỳ sẽ được <strong>tự động thêm vào lớp</strong>.</div>
-          <div class="form-group">
-            <label class="form-label">Tên lớp *</label>
-            <input v-model="form.name" class="form-control" placeholder="CNTT K1 - Nhập môn Lập trình" />
-          </div>
+          <div class="form-group"><label class="form-label">Tên lớp *</label><input v-model="form.name" class="form-control" placeholder="CNTT K1 - Nhập môn Lập trình" /></div>
           <div class="grid-2">
             <div class="form-group">
               <label class="form-label">Môn học *</label>
@@ -66,25 +59,14 @@
             </div>
           </div>
           <div class="grid-2">
-            <div class="form-group">
-              <label class="form-label">Kỳ học *</label>
-              <input v-model.number="form.semester" type="number" min="1" class="form-control" />
-            </div>
-            <div class="form-group">
-              <label class="form-label">Năm học *</label>
-              <input v-model="form.year" class="form-control" placeholder="2024-2025" />
-            </div>
+            <div class="form-group"><label class="form-label">Kỳ học *</label><input v-model.number="form.semester" type="number" min="1" class="form-control" /></div>
+            <div class="form-group"><label class="form-label">Năm học *</label><input v-model="form.year" class="form-control" placeholder="2024-2025" /></div>
           </div>
-          <div class="form-group">
-            <label class="form-label">ID Giáo viên</label>
-            <input v-model="form.teacher" class="form-control" placeholder="000000000000000000000001" />
-          </div>
+          <div class="form-group"><label class="form-label">ID Giáo viên *</label><input v-model="form.teacher" class="form-control" placeholder="Paste _id của teacher vào đây" /></div>
         </div>
         <div class="modal-footer">
           <button class="btn btn-ghost" @click="showModal=false">Hủy</button>
-          <button class="btn btn-primary" @click="save" :disabled="saving">
-            {{ saving ? 'Đang tạo...' : 'Tạo lớp học' }}
-          </button>
+          <button class="btn btn-primary" @click="save" :disabled="saving">{{ saving ? 'Đang tạo...' : 'Tạo lớp học' }}</button>
         </div>
       </div>
     </div>
@@ -92,48 +74,35 @@
 </template>
 
 <script setup>
+/* eslint-disable */
 import { ref, reactive, onMounted } from 'vue'
 import { classAPI, majorAPI, subjectAPI } from '@/api'
 
-const classes  = ref([])
-const majors   = ref([])
-const subjects = ref([])
+const classes   = ref([])
+const majors    = ref([])
+const subjects  = ref([])
 const loading   = ref(true)
 const showModal = ref(false)
 const saving    = ref(false)
 const error     = ref('')
-const form = reactive({ name:'', subject:'', major:'', semester:1, year:'2024-2025', teacher:'000000000000000000000001' })
+const form = reactive({ name:'', subject:'', major:'', semester:1, year:'2024-2025', teacher:'' })
 
-const load = async () => {
-  loading.value = true
-  const { data } = await classAPI.getAll()
-  classes.value = data; loading.value = false
-}
+const load = async () => { loading.value=true; const { data } = await classAPI.getAll(); classes.value=data; loading.value=false }
 
-const openCreate = () => {
-  Object.assign(form, { name:'', subject:'', major:'', semester:1, year:'2024-2025', teacher:'000000000000000000000001' })
-  error.value = ''; showModal.value = true
-}
+const openCreate = () => { Object.assign(form,{name:'',subject:'',major:'',semester:1,year:'2024-2025',teacher:''}); error.value=''; showModal.value=true }
 
 const save = async () => {
-  if (!form.name || !form.subject || !form.major) return (error.value = 'Vui lòng điền đầy đủ thông tin')
-  saving.value = true; error.value = ''
-  try {
-    await classAPI.create(form)
-    showModal.value = false; await load()
-  } catch(e) {
-    error.value = e.response?.data?.message || 'Có lỗi xảy ra'
-  } finally { saving.value = false }
+  if (!form.name||!form.subject||!form.major||!form.teacher) return (error.value='Vui lòng điền đầy đủ thông tin')
+  saving.value=true; error.value=''
+  try { await classAPI.create(form); showModal.value=false; await load() }
+  catch(e) { error.value = e.response?.data?.message || 'Có lỗi xảy ra' }
+  finally { saving.value=false }
 }
 
-const remove = async (c) => {
-  if (!confirm(`Xóa lớp "${c.name}"?`)) return
-  await classAPI.remove(c._id); await load()
-}
+const remove = async (c) => { if (!confirm(`Xóa lớp "${c.name}"?`)) return; await classAPI.remove(c._id); await load() }
 
 onMounted(async () => {
   const [m, s] = await Promise.all([majorAPI.getAll(), subjectAPI.getAll()])
-  majors.value = m.data; subjects.value = s.data
-  await load()
+  majors.value=m.data; subjects.value=s.data; await load()
 })
 </script>
