@@ -1,8 +1,20 @@
+// src/router/index.js - Định nghĩa các trang và bảo vệ route
+// ===================================================
+// Router: quản lý việc chuyển trang trong Vue app
+//
+// Mỗi route có meta để kiểm soát quyền truy cập:
+//   public: true  → ai cũng vào được (login, forbidden)
+//   auth: true    → phải đăng nhập
+//   roles: [...]  → phải có role phù hợp
+//
+// beforeEach: chạy trước mỗi lần chuyển trang để kiểm tra quyền
+// ===================================================
+
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/store/auth'
 
 const routes = [
-  // Public
+  // ── Trang public (không cần đăng nhập) ──────────
   {
     path: '/login',
     component: () => import('@/views/LoginView.vue'),
@@ -14,7 +26,7 @@ const routes = [
     meta: { public: true }
   },
 
-  // Admin + Teacher
+  // ── Trang Admin + Teacher ────────────────────────
   {
     path: '/',
     component: () => import('@/views/DashboardView.vue'),
@@ -23,7 +35,7 @@ const routes = [
   {
     path: '/majors',
     component: () => import('@/views/MajorsView.vue'),
-    meta: { auth: true, roles: ['admin'] }
+    meta: { auth: true, roles: ['admin'] }          // chỉ admin
   },
   {
     path: '/subjects',
@@ -34,6 +46,11 @@ const routes = [
     path: '/programs',
     component: () => import('@/views/ProgramsView.vue'),
     meta: { auth: true, roles: ['admin'] }
+  },
+  {
+    path: '/accounts',
+    component: () => import('@/views/AccountsView.vue'),
+    meta: { auth: true, roles: ['admin'] }          // quản lý tài khoản
   },
   {
     path: '/students',
@@ -66,7 +83,7 @@ const routes = [
     meta: { auth: true, roles: ['admin', 'teacher'] }
   },
 
-  // Student portal
+  // ── Trang Student ────────────────────────────────
   {
     path: '/student-portal',
     component: () => import('@/views/StudentPortal.vue'),
@@ -78,7 +95,7 @@ const routes = [
     meta: { auth: true, roles: ['student'] }
   },
 
-  // Catch all
+  // Mọi URL không khớp → về trang chủ
   { path: '/:pathMatch(.*)*', redirect: '/' }
 ]
 
@@ -87,10 +104,11 @@ const router = createRouter({
   routes
 })
 
+// Kiểm tra quyền trước mỗi lần chuyển trang
 router.beforeEach((to) => {
   const auth = useAuthStore()
 
-  // Public routes
+  // Trang public: nếu đã đăng nhập mà vào /login → redirect về trang chính
   if (to.meta.public) {
     if (to.path === '/login' && auth.isLoggedIn) {
       return auth.isStudent ? '/student-portal' : '/'
@@ -98,12 +116,12 @@ router.beforeEach((to) => {
     return true
   }
 
-  // Not logged in → login
+  // Chưa đăng nhập → về trang login
   if (to.meta.auth && !auth.isLoggedIn) {
     return '/login'
   }
 
-  // Wrong role → forbidden
+  // Sai role → trang forbidden
   if (to.meta.roles && !to.meta.roles.includes(auth.user?.role)) {
     return '/forbidden'
   }

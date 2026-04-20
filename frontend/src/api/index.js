@@ -8,13 +8,11 @@ const api = axios.create({
 // Tự động gắn token vào mọi request
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token')
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
-  }
+  if (token) config.headers.Authorization = `Bearer ${token}`
   return config
 })
 
-// Xử lý lỗi 401: token hết hạn → về login
+// Token hết hạn → về login
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -27,6 +25,18 @@ api.interceptors.response.use(
   }
 )
 
+// ── Auth ──────────────────────────────────
+export const authAPI = {
+  login:                (data) => api.post('/auth/login', data),
+  getMe:                ()     => api.get('/auth/me'),
+  getTeachers:          ()     => api.get('/auth/teachers'),
+  createTeacher:        (data) => api.post('/auth/create-teacher', data),
+  createStudentAccount: (data) => api.post('/auth/create-student-account', data),
+  changePassword:       (data) => api.put('/auth/change-password', data),
+  deleteUser:           (id)   => api.delete(`/auth/users/${id}`)
+}
+
+// ── Majors ────────────────────────────────
 export const majorAPI = {
   getAll:  ()           => api.get('/majors'),
   getOne:  (id)         => api.get(`/majors/${id}`),
@@ -35,6 +45,7 @@ export const majorAPI = {
   remove:  (id)         => api.delete(`/majors/${id}`)
 }
 
+// ── Subjects ──────────────────────────────
 export const subjectAPI = {
   getAll:  ()           => api.get('/subjects'),
   getOne:  (id)         => api.get(`/subjects/${id}`),
@@ -43,6 +54,7 @@ export const subjectAPI = {
   remove:  (id)         => api.delete(`/subjects/${id}`)
 }
 
+// ── Programs ──────────────────────────────
 export const programAPI = {
   getAll:     ()          => api.get('/programs'),
   getByMajor: (majorId)   => api.get(`/programs/major/${majorId}`),
@@ -51,6 +63,7 @@ export const programAPI = {
   remove:     (id)        => api.delete(`/programs/${id}`)
 }
 
+// ── Students ──────────────────────────────
 export const studentAPI = {
   getAll:          (params)   => api.get('/students', { params }),
   getOne:          (id)       => api.get(`/students/${id}`),
@@ -60,6 +73,7 @@ export const studentAPI = {
   advanceSemester: (id)       => api.post(`/students/${id}/advance-semester`)
 }
 
+// ── Classes ───────────────────────────────
 export const classAPI = {
   getAll:     ()          => api.get('/classes'),
   getOne:     (id)        => api.get(`/classes/${id}`),
@@ -69,6 +83,7 @@ export const classAPI = {
   addSession: (id, data)  => api.post(`/classes/${id}/sessions`, data)
 }
 
+// ── Attendance ────────────────────────────
 export const attendanceAPI = {
   bulkSave:          (data)                  => api.post('/attendance/bulk', data),
   getBySession:      (classId, sessionIndex) => api.get(`/attendance/class/${classId}/session/${sessionIndex}`),
@@ -77,6 +92,7 @@ export const attendanceAPI = {
   getByStudent:      (studentId)             => api.get(`/attendance/student/${studentId}`)
 }
 
+// ── Materials ─────────────────────────────
 export const materialAPI = {
   getByClass: (classId)           => api.get(`/materials/class/${classId}`),
   upload:     (classId, formData) => api.post(`/materials/class/${classId}`, formData, {
@@ -86,6 +102,7 @@ export const materialAPI = {
   remove:     (id)  => api.delete(`/materials/${id}`)
 }
 
+// ── Assignments ───────────────────────────
 export const assignmentAPI = {
   getByClass:     (classId)            => api.get(`/assignments/class/${classId}`),
   getOne:         (id)                 => api.get(`/assignments/${id}`),

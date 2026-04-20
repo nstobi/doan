@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
-    "target": "es5",
-    "module": "esnext",
-    "baseUrl": "./",
+    "target": "es6",
+    "module": "es6",
+    "baseUrl": ".",
     "moduleResolution": "node",
     "paths": {
       "@/*": [

@@ -1,3 +1,5 @@
+// controllers/programController.js - Chương trình đào tạo
+
 const Program = require('../models/Program')
 
 exports.getAll = async (req, res) => {
@@ -6,9 +8,7 @@ exports.getAll = async (req, res) => {
       .populate('major', 'name code')
       .populate('semesters.subjects', 'name code credits')
     return res.json(programs)
-  } catch (err) {
-    return res.status(500).json({ message: err.message })
-  }
+  } catch (err) { return res.status(500).json({ message: err.message }) }
 }
 
 exports.getByMajor = async (req, res) => {
@@ -18,9 +18,7 @@ exports.getByMajor = async (req, res) => {
       .populate('semesters.subjects', 'name code credits')
     if (!program) return res.status(404).json({ message: 'Ngành này chưa có chương trình đào tạo' })
     return res.json(program)
-  } catch (err) {
-    return res.status(500).json({ message: err.message })
-  }
+  } catch (err) { return res.status(500).json({ message: err.message }) }
 }
 
 exports.create = async (req, res) => {
@@ -43,16 +41,12 @@ exports.update = async (req, res) => {
       .populate('semesters.subjects', 'name code credits')
     if (!program) return res.status(404).json({ message: 'Không tìm thấy chương trình' })
     return res.json(program)
-  } catch (err) {
-    return res.status(500).json({ message: err.message })
-  }
+  } catch (err) { return res.status(500).json({ message: err.message }) }
 }
 
 exports.remove = async (req, res) => {
   try {
     await Program.findByIdAndDelete(req.params.id)
     return res.json({ message: 'Đã xóa chương trình' })
-  } catch (err) {
-    return res.status(500).json({ message: err.message })
-  }
+  } catch (err) { return res.status(500).json({ message: err.message }) }
 }

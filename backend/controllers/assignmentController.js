@@ -1,18 +1,22 @@
+// controllers/assignmentController.js - Bài thi & Nộp bài
+
 const Assignment = require('../models/Assignment')
 const Submission = require('../models/Submission')
 const fs         = require('fs')
 
+// ── Bài thi ─────────────────────────────────────────
+
+// Lấy bài thi của 1 lớp
 exports.getByClass = async (req, res) => {
   try {
-    const assignments = await Assignment.find({ class: req.params.classId })
+    const list = await Assignment.find({ class: req.params.classId })
       .populate('createdBy', 'name')
       .sort({ dueDate: 1 })
-    return res.json(assignments)
-  } catch (err) {
-    return res.status(500).json({ message: err.message })
-  }
+    return res.json(list)
+  } catch (err) { return res.status(500).json({ message: err.message }) }
 }
 
+// Lấy chi tiết 1 bài thi
 exports.getOne = async (req, res) => {
   try {
     const assignment = await Assignment.findById(req.params.id)
@@ -20,11 +24,10 @@ exports.getOne = async (req, res) => {
       .populate('class', 'name')
     if (!assignment) return res.status(404).json({ message: 'Không tìm thấy bài thi' })
     return res.json(assignment)
-  } catch (err) {
-    return res.status(500).json({ message: err.message })
-  }
+  } catch (err) { return res.status(500).json({ message: err.message }) }
 }
 
+// Tạo bài thi mới
 exports.create = async (req, res) => {
   try {
     const data = {
@@ -38,6 +41,7 @@ exports.create = async (req, res) => {
       attachments: []
     }
 
+    // Nếu có file đính kèm
     if (req.files && req.files.length > 0) {
       data.attachments = req.files.map(f => ({
         originalName: f.originalname,
@@ -50,56 +54,55 @@ exports.create = async (req, res) => {
     const assignment = await Assignment.create(data)
     const populated  = await Assignment.findById(assignment._id).populate('createdBy', 'name')
     return res.status(201).json(populated)
-  } catch (err) {
-    return res.status(500).json({ message: err.message })
-  }
+  } catch (err) { return res.status(500).json({ message: err.message }) }
 }
 
+// Cập nhật bài thi
 exports.update = async (req, res) => {
   try {
     const assignment = await Assignment.findByIdAndUpdate(req.params.id, req.body, { new: true })
       .populate('createdBy', 'name')
     if (!assignment) return res.status(404).json({ message: 'Không tìm thấy bài thi' })
     return res.json(assignment)
-  } catch (err) {
-    return res.status(500).json({ message: err.message })
-  }
+  } catch (err) { return res.status(500).json({ message: err.message }) }
 }
 
+// Xóa bài thi
 exports.remove = async (req, res) => {
   try {
     await Assignment.findByIdAndDelete(req.params.id)
     return res.json({ message: 'Đã xóa bài thi' })
-  } catch (err) {
-    return res.status(500).json({ message: err.message })
-  }
+  } catch (err) { return res.status(500).json({ message: err.message }) }
 }
 
+// ── Bài nộp ─────────────────────────────────────────
+
+// Giáo viên xem tất cả bài nộp
 exports.getSubmissions = async (req, res) => {
   try {
-    const submissions = await Submission.find({ assignment: req.params.id })
+    const list = await Submission.find({ assignment: req.params.id })
       .populate('student',  'studentId name email')
       .populate('gradedBy', 'name')
       .sort({ createdAt: -1 })
-    return res.json(submissions)
-  } catch (err) {
-    return res.status(500).json({ message: err.message })
-  }
+    return res.json(list)
+  } catch (err) { return res.status(500).json({ message: err.message }) }
 }
 
+// Sinh viên nộp bài
 exports.submit = async (req, res) => {
   try {
     const assignment = await Assignment.findById(req.params.id)
     if (!assignment) return res.status(404).json({ message: 'Không tìm thấy bài thi' })
     if (assignment.status === 'closed') return res.status(400).json({ message: 'Bài thi đã đóng' })
 
-    const isLate = new Date() > new Date(assignment.dueDate)
-    const status = isLate ? 'late' : 'submitted'
+    // Kiểm tra nộp trễ
+    const noiTre = new Date() > new Date(assignment.dueDate)
+    const status = noiTre ? 'late' : 'submitted'
 
     // Cho phép nộp lại: xóa bài cũ
     await Submission.deleteOne({ assignment: req.params.id, student: req.body.studentId })
 
-    const submissionData = {
+    const data = {
       assignment:  req.params.id,
       student:     req.body.studentId,
       content:     req.body.content || '',
@@ -108,7 +111,7 @@ exports.submit = async (req, res) => {
     }
 
     if (req.files && req.files.length > 0) {
-      submissionData.attachments = req.files.map(f => ({
+      data.attachments = req.files.map(f => ({
         originalName: f.originalname,
         fileName:     f.filename,
         filePath:     f.path,
@@ -116,19 +119,17 @@ exports.submit = async (req, res) => {
       }))
     }
 
-    const submission = await Submission.create(submissionData)
-    const populated  = await Submission.findById(submission._id)
-      .populate('student', 'studentId name')
+    const submission = await Submission.create(data)
+    const populated  = await Submission.findById(submission._id).populate('student', 'studentId name')
 
     return res.status(201).json({
       ...populated.toObject(),
-      message: isLate ? '⚠️ Nộp bài thành công (trễ hạn)' : '✅ Nộp bài thành công'
+      message: noiTre ? '⚠️ Nộp bài thành công (trễ hạn)' : '✅ Nộp bài thành công'
     })
-  } catch (err) {
-    return res.status(500).json({ message: err.message })
-  }
+  } catch (err) { return res.status(500).json({ message: err.message }) }
 }
 
+// Giáo viên chấm điểm
 exports.grade = async (req, res) => {
   try {
     const { score, feedback } = req.body
@@ -142,22 +143,19 @@ exports.grade = async (req, res) => {
 
     if (!submission) return res.status(404).json({ message: 'Không tìm thấy bài nộp' })
     return res.json(submission)
-  } catch (err) {
-    return res.status(500).json({ message: err.message })
-  }
+  } catch (err) { return res.status(500).json({ message: err.message }) }
 }
 
+// Tải file bài nộp
 exports.downloadSubmission = async (req, res) => {
   try {
     const submission = await Submission.findById(req.params.submissionId)
     if (!submission) return res.status(404).json({ message: 'Không tìm thấy bài nộp' })
 
     const file = submission.attachments[parseInt(req.params.fileIndex)]
-    if (!file) return res.status(404).json({ message: 'Không tìm thấy file' })
-    if (!fs.existsSync(file.filePath)) return res.status(404).json({ message: 'File không tồn tại' })
-
+    if (!file || !fs.existsSync(file.filePath)) {
+      return res.status(404).json({ message: 'Không tìm thấy file' })
+    }
     return res.download(file.filePath, file.originalName)
-  } catch (err) {
-    return res.status(500).json({ message: err.message })
-  }
+  } catch (err) { return res.status(500).json({ message: err.message }) }
 }

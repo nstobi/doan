@@ -1,3 +1,6 @@
+// controllers/studentController.js - Quản lý sinh viên
+// LOGIC AUTO-ENROLL: tạo SV -> tự động đăng ký môn kỳ 1
+
 const Student = require('../models/Student')
 const Program = require('../models/Program')
 
@@ -19,9 +22,7 @@ exports.getAll = async (req, res) => {
       .populate('enrolledSubjects.subject', 'name code credits')
       .sort({ studentId: 1 })
     return res.json(students)
-  } catch (err) {
-    return res.status(500).json({ message: err.message })
-  }
+  } catch (err) { return res.status(500).json({ message: err.message }) }
 }
 
 exports.getOne = async (req, res) => {
@@ -31,42 +32,29 @@ exports.getOne = async (req, res) => {
       .populate('enrolledSubjects.subject', 'name code credits description')
     if (!student) return res.status(404).json({ message: 'Không tìm thấy sinh viên' })
     return res.json(student)
-  } catch (err) {
-    return res.status(500).json({ message: err.message })
-  }
+  } catch (err) { return res.status(500).json({ message: err.message }) }
 }
 
 exports.create = async (req, res) => {
   try {
     const { studentId, name, email, phone, dateOfBirth, major } = req.body
+    const student = new Student({ studentId, name, email, phone, dateOfBirth, major, currentSemester: 1, enrolledSubjects: [] })
 
-    const student = new Student({
-      studentId, name, email, phone, dateOfBirth, major,
-      currentSemester:  1,
-      enrolledSubjects: []
-    })
-
-    // Auto-enroll môn học kỳ 1
+    // TỰ ĐỘNG ĐĂNG KÝ MÔN KỲ 1
     if (major) {
       const program = await Program.findOne({ major })
       if (program) {
-        const semester1 = program.semesters.find(s => s.semesterNumber === 1)
-        if (semester1 && semester1.subjects.length > 0) {
-          student.enrolledSubjects = semester1.subjects.map(subjectId => ({
-            subject:  subjectId,
-            semester: 1,
-            status:   'in_progress'
-          }))
+        const ky1 = program.semesters.find(s => s.semesterNumber === 1)
+        if (ky1 && ky1.subjects.length > 0) {
+          student.enrolledSubjects = ky1.subjects.map(id => ({ subject: id, semester: 1, status: 'in_progress' }))
         }
       }
     }
 
     await student.save()
-
     const populated = await Student.findById(student._id)
       .populate('major', 'name code')
       .populate('enrolledSubjects.subject', 'name code credits')
-
     return res.status(201).json(populated)
   } catch (err) {
     if (err.code === 11000) {
@@ -84,18 +72,14 @@ exports.update = async (req, res) => {
       .populate('enrolledSubjects.subject', 'name code credits')
     if (!student) return res.status(404).json({ message: 'Không tìm thấy sinh viên' })
     return res.json(student)
-  } catch (err) {
-    return res.status(500).json({ message: err.message })
-  }
+  } catch (err) { return res.status(500).json({ message: err.message }) }
 }
 
 exports.remove = async (req, res) => {
   try {
     await Student.findByIdAndDelete(req.params.id)
     return res.json({ message: 'Đã xóa sinh viên' })
-  } catch (err) {
-    return res.status(500).json({ message: err.message })
-  }
+  } catch (err) { return res.status(500).json({ message: err.message }) }
 }
 
 exports.advanceSemester = async (req, res) => {
@@ -103,32 +87,22 @@ exports.advanceSemester = async (req, res) => {
     const student = await Student.findById(req.params.id)
     if (!student) return res.status(404).json({ message: 'Không tìm thấy sinh viên' })
 
-    const nextSemester = student.currentSemester + 1
-    const program = await Program.findOne({ major: student.major })
+    const kyMoi    = student.currentSemester + 1
+    const program  = await Program.findOne({ major: student.major })
     if (!program) return res.status(400).json({ message: 'Ngành chưa có chương trình đào tạo' })
-    if (nextSemester > program.totalSemesters) {
-      return res.status(400).json({ message: 'Đã hoàn thành toàn bộ chương trình' })
+    if (kyMoi > program.totalSemesters) return res.status(400).json({ message: 'Đã hoàn thành toàn bộ chương trình' })
+
+    const kyMoiData = program.semesters.find(s => s.semesterNumber === kyMoi)
+    if (kyMoiData) {
+      student.enrolledSubjects.push(...kyMoiData.subjects.map(id => ({ subject: id, semester: kyMoi, status: 'in_progress' })))
     }
 
-    const nextSemData = program.semesters.find(s => s.semesterNumber === nextSemester)
-    if (nextSemData) {
-      const newSubjects = nextSemData.subjects.map(subjectId => ({
-        subject:  subjectId,
-        semester: nextSemester,
-        status:   'in_progress'
-      }))
-      student.enrolledSubjects.push(...newSubjects)
-    }
-
-    student.currentSemester = nextSemester
+    student.currentSemester = kyMoi
     await student.save()
 
     const populated = await Student.findById(student._id)
       .populate('major', 'name code')
       .populate('enrolledSubjects.subject', 'name code credits')
-
     return res.json(populated)
-  } catch (err) {
-    return res.status(500).json({ message: err.message })
-  }
+  } catch (err) { return res.status(500).json({ message: err.message }) }
 }
