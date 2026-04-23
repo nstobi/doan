@@ -17,35 +17,25 @@
 
       <nav class="sidebar-nav">
         <!-- Tổng quan: ai cũng thấy -->
-        <router-link to="/" class="nav-item" exact-active-class="active">
-          <span>📊</span><span>Tổng quan</span>
-        </router-link>
-
-        <!-- Chỉ Admin mới thấy phần Cấu hình -->
-        <template v-if="authStore.isAdmin">
-          <div class="nav-section">Cấu hình</div>
-          <router-link to="/majors" class="nav-item" active-class="active">
-            <span>🏫</span><span>Ngành học</span>
-          </router-link>
-          <router-link to="/subjects" class="nav-item" active-class="active">
-            <span>📚</span><span>Môn học</span>
-          </router-link>
-          <router-link to="/programs" class="nav-item" active-class="active">
-            <span>📋</span><span>Chương trình đào tạo</span>
-          </router-link>
-          <router-link to="/accounts" class="nav-item" active-class="active">
-            <span>👥</span><span>Tài khoản</span>
-          </router-link>
-        </template>
-
-        <!-- Admin + Teacher đều thấy phần Quản lý -->
-        <div class="nav-section">Quản lý</div>
-        <router-link to="/students" class="nav-item" active-class="active">
-          <span>👩‍🎓</span><span>Sinh viên</span>
-        </router-link>
-        <router-link to="/classes" class="nav-item" active-class="active">
-          <span>🏛️</span><span>Lớp học</span>
-        </router-link>
+        <!-- Thay trong App.vue -->
+      <router-link to="/majors" class="nav-item" active-class="active">
+        <span>📋</span><span>Chương trình</span>    <!-- Ngành học → Chương trình -->
+      </router-link>
+      <router-link to="/subjects" class="nav-item" active-class="active">
+        <span>🎯</span><span>Kỹ năng</span>          <!-- Môn học → Kỹ năng -->
+      </router-link>
+      <router-link to="/programs" class="nav-item" active-class="active">
+        <span>🗺️</span><span>Lộ trình học</span>    <!-- Chương trình đào tạo → Lộ trình -->
+      </router-link>
+      <router-link to="/accounts" class="nav-item" active-class="active">
+        <span>👥</span><span>Tài khoản</span>
+      </router-link>
+      <router-link to="/students" class="nav-item" active-class="active">
+        <span>👩‍🎓</span><span>Học viên</span>        <!-- Sinh viên → Học viên -->
+      </router-link>
+      <router-link to="/classes" class="nav-item" active-class="active">
+        <span>🏛️</span><span>Lớp học</span>
+      </router-link>
       </nav>
 
       <!-- Thông tin user + nút đăng xuất -->
